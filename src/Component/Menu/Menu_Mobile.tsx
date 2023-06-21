@@ -1,0 +1,221 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import List from "devextreme-react/list.js";
+import Drawer from "devextreme-react/drawer";
+import Toolbar, { Item } from "devextreme-react/toolbar";
+import { useRecoilValue } from "recoil";
+import { userdata, UserState } from "../../Recoil/MainRecoil";
+import { ReactComponent as Icon_grey } from "../../image/SVG_Memorybox/Navbar Top/Nav icon_grey.svg";
+import THAicon from "../../image/lang/THA icon.png";
+import ENGicon from "../../image/lang/ENG icon.png";
+import CNAicon from "../../image/lang/CNA icon.png";
+import RUSicon from "../../image/lang/RUS icon.png";
+import Auth from "../../MainCall/Auth";
+import MenuBottom from "./MenuBottom";
+import { useTranslation } from "react-i18next";
+import PopupLang from "../MainPage/PopupLang";
+export default function Menu_Mobile(props) {
+  //---------------------ตัวแปร-----------------------------
+  const UserStateData = useRecoilValue<userdata>(UserState);
+  const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const navigation = [
+    { id: 1, text: "Home", icon: "far fa-home" },
+    { id: 2, text: "Pricing", icon: "far fa-dollar-sign" },
+    { id: 6, text: "LogOut", icon: "far fa-sign-out " },
+  ];
+  const navigation2 = [
+    { id: 1, text: "Home", icon: "far fa-home" },
+    { id: 2, text: "Pricing", icon: "far fa-dollar-sign" },
+    { id: 6, text: "LogIn", icon: "far fa-sign-out " },
+  ];
+  const { pageshow, Title } = props;
+  const [opened, setopened] = useState<boolean>(false);
+  const [islogin, setislogin] = useState(false);
+  const [isPopupVisible, setPopupVisibility] = useState(false);
+  //---------------------onload-----------------------------
+  useEffect(() => {
+    Auth.CurrentUser().then((res) => {
+      if (res === "") {
+        setislogin(false);
+      } else {
+        setislogin(true);
+      }
+    });
+  }, []);
+
+  //---------------------function-----------------------------
+  const done = () => {
+    setPopupVisibility(false);
+  };
+  const togglePopup = () => {
+    setPopupVisibility(!isPopupVisible);
+  };
+  const setLang = (lang) => {
+    localStorage.setItem("Lang", lang);
+  };
+  const menucilck = (e) => {
+    if (e.itemData.id === 1) {
+      Auth.CurrentUser().then((res) => {
+        if (res === "") {
+          navigate("/Authen");
+        } else {
+          navigate("../");
+          onOutsideClick();
+        }
+      });
+    } else if (e.itemData.id === 2) {
+      Auth.CurrentUser().then((res) => {
+        if (res === "") {
+          navigate("/Authen");
+        } else {
+          navigate("../Price");
+          onOutsideClick();
+        }
+      });
+    } else if (e.itemData.id === 6) {
+      Auth.CurrentUser().then((res) => {
+        if (res === "") {
+          Auth.LogOut();
+          navigate("/Authen");
+        } else {
+          Auth.LogOut();
+          onOutsideClick();
+        }
+      });
+    }
+  };
+  const btnMenu = () => {
+    return (
+      <button type="button" className="hover:bg-slate-100 p-2">
+        <Icon_grey
+          className="inline h-[auto] w-[30px] "
+          onClick={() => setopened(!opened)}
+        />
+      </button>
+    );
+  };
+
+  const lang = () => {
+    return (
+      <span>
+        <span
+          className={
+            localStorage.getItem("Lang") === "th"
+              ? "text-[#0D6AFA] cursor-pointer"
+              : "cursor-pointer"
+          }
+          onClick={() => {
+            i18n.changeLanguage("th");
+            setLang("th");
+          }}
+        >
+          ไทย
+        </span>
+        <span> | </span>
+        <span
+          className={
+            localStorage.getItem("Lang") === "en"
+              ? "text-[#0D6AFA] cursor-pointer"
+              : "cursor-pointer"
+          }
+          onClick={() => {
+            i18n.changeLanguage("en");
+            setLang("en");
+          }}
+        >
+          EN
+        </span>
+      </span>
+    );
+  };
+  const btnlang = () => {
+    return (
+      <button type="button" className="hover:bg-slate-100 p-2">
+        <img
+          className="h-8"
+          src={
+            localStorage.getItem("Lang") === "th"
+              ? THAicon
+              : localStorage.getItem("Lang") === "en"
+              ? ENGicon
+              : localStorage.getItem("Lang") === "cna"
+              ? CNAicon
+              : localStorage.getItem("Lang") === "rus"
+              ? RUSicon
+              : ENGicon
+          }
+          onClick={togglePopup}
+        />
+      </button>
+    );
+  };
+  const btnBack = () => {
+    return (
+      <button type="button" className="hover:bg-slate-100 p-2">
+        <i
+          className="fal fa-angle-left text-3xl"
+          onClick={() => navigate(-1)}
+        ></i>
+      </button>
+    );
+  };
+  const onOutsideClick = () => {
+    setopened(false);
+    return false;
+  };
+  //---------------------html----------------------------
+  function drawerComponentList() {
+    return (
+      <div className="list relative">
+        <div
+          className="list absolute top-[60px] shadow"
+          style={{ width: "100vw" }}
+        >
+          <List
+            dataSource={islogin ? navigation : navigation2}
+            className="panel-list dx-theme-accent-as-background-color"
+            onItemClick={(e) => {
+              menucilck(e);
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+  return (
+    <>
+      <PopupLang data={isPopupVisible} toggle={togglePopup} done={done} />
+      <section
+        id="bottom-navigation"
+        className=" fixed inset-x-0 top-0 z-20 bg-white shadow"
+      >
+        <Toolbar>
+          <Item location="before" render={btnBack} />
+          <Item location="center" text={t(Title)} />
+          <Item location="after" render={btnlang} />
+          <Item location="after" render={btnMenu} />
+        </Toolbar>
+      </section>
+      <Drawer
+        className="fixed inset-x-0 top-0 z-10"
+        opened={opened}
+        closeOnOutsideClick={onOutsideClick}
+        openedStateMode="shrink"
+        position="top"
+        component={drawerComponentList}
+        revealMode="expand"
+        height={"auto"}
+        maxSize={300}
+      ></Drawer>
+      <div id="content" className="dx-theme-background-color">
+        <div className="grid grid-cols-12 bg-[#F6F9FF] pb-[60px] mt-[60px] ">
+          <div className="grid  col-span-12 sm:col-span-12 md:col-span-10 md:col-start-2 lg:col-span-10 lg:col-start-2 xl:col-start-2 xl:col-span-10 bg-[#F6F9FF]">
+            {pageshow}
+          </div>
+        </div>
+      </div>
+      <MenuBottom />
+    </>
+  );
+}
